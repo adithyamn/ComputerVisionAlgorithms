@@ -1,6 +1,5 @@
- #Using Hough Space to detect lines
- #Finds the best fitted pixel with the most intersected points of a different lines in an image space. 
- #Found via (theta,perpendicular dist) of different points which intersect at one point.
+#This code has the same line detection algorithm but it can detect lines in a video
+
 
 import cv2 
 import numpy as np
