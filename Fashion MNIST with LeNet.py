@@ -2,9 +2,8 @@
 
 from __future__ import print_function, division
 from builtins import range
-
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Flatten, Dropout, BatchNormalization
+from keras.models import Sequential, Model
+from keras.layers import Dense, Activation, Conv2D, MaxPooling2D, Flatten, Dropout, BatchNormalization, Input
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,8 +18,6 @@ def y2indicator(Y):
   I[np.arange(N), Y] = 1
   return I
 
-
-
 data = pd.read_csv('D:/Folders/ML & CV/Advanced Computer Vision/Fashion_MNIST/fashionmnist/fashion-mnist_train.csv')
 data = data.values
 np.random.shuffle(data)
@@ -29,37 +26,32 @@ X = data[:, 1:].reshape(-1, 28, 28, 1) / 255.0
 Y = data[:, 0].astype(np.int32)
 
 
+#Pre-Processing
 N = len(Y)
 K = len(set(Y))
-
 Y = y2indicator(Y)
 
-model = Sequential()
 
-#model.add(Input(shape=(28, 28, 1)))
-model.add(Conv2D(input_shape=(28, 28, 1), filters=32, kernel_size=(3, 3)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(GlobalMaxPooling2D())
+# Functional API 
+i = Input(shape=(28, 28, 1))
+x = Conv2D(filters=32, kernel_size=(3, 3))(i)
+x = BatchNormalization()(x)
+x = Activation('relu')(x)
+x = MaxPooling2D()(x)
 
-model.add(Conv2D(filters=64, kernel_size=(3, 3)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(GlobalMaxPooling2D())
+x = Conv2D(filters=64, kernel_size=(3, 3))(x)
+x = BatchNormalization()(x)
+x = Activation('relu')(x)
+x = MaxPooling2D()(x)
 
-model.add(Conv2D(filters=128, kernel_size=(3, 3)))
-model.add(BatchNormalization())
-model.add(Activation('relu'))
-model.add(GlobalMaxPooling2D())
+x = Flatten()(x)
+x = Dense(units=100)(x)
+x = Activation('relu')(x)
+x = Dropout(0.3)(x)
+x = Dense(units=K)(x)
+x = Activation('softmax')(x)
 
-model.add(Flatten())
-model.add(Dense(units=300))
-model.add(Activation('relu'))
-model.add(Dropout(0.2))
-model.add(Dense(units=K))
-model.add(Activation('softmax'))
-
-
+model = Model(inputs=i, outputs=x)
 
 model.compile(
   loss='categorical_crossentropy',
@@ -68,19 +60,22 @@ model.compile(
 )
 
 
-
 r = model.fit(X, Y, validation_split=0.33, epochs=15, batch_size=32)
 print("Returned:", r)
+
+
+#Get Data History
 print(r.history.keys())
 
-# plot some data
+# Plot The Network
+# Losses
 plt.plot(r.history['loss'], label='loss')
 plt.plot(r.history['val_loss'], label='val_loss')
 plt.legend()
 plt.show()
 
-# accuracies
-plt.plot(r.history['accuracy'], label='accurracy')
+# Accuracies
+plt.plot(r.history['accuracy'], label='acc')
 plt.plot(r.history['val_accuracy'], label='val_acc')
 plt.legend()
 plt.show()
